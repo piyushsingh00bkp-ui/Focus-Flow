@@ -5,6 +5,8 @@ const time = document.getElementById("timer");
 let isFocusing = false;
 let timeLeft = 25 * 60 * 1000;
 let timer = null;
+let isBreak = false;
+let breakTime = 5 * 60 * 1000;
 
 startBtn.addEventListener("click", () => {
 
@@ -19,28 +21,63 @@ startBtn.addEventListener("click", () => {
 
         timer = setInterval(() => {
 
-            timeLeft = timeLeft - 10;
+            timeLeft -= 10;
 
             // TIMER FINISHED
             if (timeLeft <= 0) {
 
-                timeLeft = 0;
-
                 clearInterval(timer);
                 timer = null;
 
-                isFocusing = false;
-                status.textContent = "Focus Complete!";
-                startBtn.textContent = "Start";
+                if (isBreak === false) {
 
-                time.textContent = "00:00:000";
+                    // Focus ended → start break
+                    isBreak = true;
+                    timeLeft = breakTime;
+                    status.textContent = "Break Time!";
 
-                return;
+                    // Auto start break
+                    timer = setInterval(() => {
+
+                        timeLeft -= 10;
+
+                        if (timeLeft <= 0) {
+
+                            clearInterval(timer);
+                            timer = null;
+
+                            isBreak = false;
+                            isFocusing = false;
+                            timeLeft = 25 * 60 * 1000;
+
+                            status.textContent = "Ready to focus?";
+                            startBtn.textContent = "Start";
+                            time.textContent = "25:00:000";
+
+                            return;
+                        }
+
+                        let minutes = Math.floor(timeLeft / 60000);
+                        let seconds = Math.floor(
+                            (timeLeft % 60000) / 1000
+                        );
+                        let milliseconds = timeLeft % 1000;
+
+                        time.textContent =
+                            `${String(minutes).padStart(2, "0")}:` +
+                            `${String(seconds).padStart(2, "0")}:` +
+                            `${String(milliseconds).padStart(3, "0")}`;
+
+                    }, 10);
+
+                }
+
             }
 
-            // DISPLAY TIMER
             let minutes = Math.floor(timeLeft / 60000);
-            let seconds = Math.floor((timeLeft % 60000) / 1000);
+            let seconds = Math.floor(
+                (timeLeft % 60000) / 1000
+            );
             let milliseconds = timeLeft % 1000;
 
             time.textContent =
@@ -54,13 +91,16 @@ startBtn.addEventListener("click", () => {
 
         // STOP MANUALLY
         isFocusing = false;
+
         status.textContent = "Ready to focus?";
         startBtn.textContent = "Start";
 
         clearInterval(timer);
         timer = null;
 
+        isBreak = false;
         timeLeft = 25 * 60 * 1000;
+
         time.textContent = "25:00:000";
 
         console.log("TIMER STOPPED");
