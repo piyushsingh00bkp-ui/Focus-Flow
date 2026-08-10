@@ -1,12 +1,14 @@
 const startBtn = document.getElementById("btn");
 const status = document.getElementById("status");
 const time = document.getElementById("timer");
+const sessions = document.getElementById("sessionCount")
 
 let isFocusing = false;
-let timeLeft = 25 * 60 * 1000;
+let timeLeft = 25*60*1000;
 let timer = null;
 let isBreak = false;
 let breakTime = 5 * 60 * 1000;
+let sessionCounter =0;
 
 startBtn.addEventListener("click", () => {
 
@@ -25,6 +27,8 @@ startBtn.addEventListener("click", () => {
 
             // TIMER FINISHED
             if (timeLeft <= 0) {
+                sessionCounter++;
+              sessions.textContent = "Sessions: " + sessionCounter;
 
                 clearInterval(timer);
                 timer = null;
@@ -71,6 +75,7 @@ startBtn.addEventListener("click", () => {
                     }, 10);
 
                 }
+                return;
 
             }
 
