@@ -1,12 +1,12 @@
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
+
 body {
-      width: 280px;
-    height: 350px;
+    width: 280px;
+    height: 420px;
     background-color: #1a1a2e;
     display: flex;
     flex-direction: column;
@@ -16,36 +16,142 @@ body {
     font-family: 'Segoe UI', sans-serif;
 }
 
-button {
-    padding: 8px 20px;
-    cursor: pointer;
+/* ---- HEADER ---- */
+.header {
+    text-align: center;
 }
-#status{
 
-    background-color: green;
-     font-size: 13px;
+.app-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #e94560;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.tagline {
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+/* ---- TIMER RING ---- */
+.timer-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+}
+
+.progress-ring__track {
+    fill: none;
+    stroke: #2a2a4a;
+    stroke-width: 10;
+}
+
+.progress-ring__fill {
+    fill: none;
+    stroke: #e94560;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 502;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.5s ease, stroke 0.5s ease;
+}
+
+/* ---- TIMER TEXT ---- */
+.timer-text {
+    position: absolute;
+    text-align: center;
+}
+
+#timer {
+    font-size: 38px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 2px;
+}
+
+#status {
+    font-size: 11px;
     color: #888;
     letter-spacing: 1px;
     text-transform: uppercase;
-
+    margin-top: 4px;
 }
+
+/* ---- SESSIONS ---- */
+#sessionCount {
+    font-size: 12px;
+    color: #555;
+    letter-spacing: 1px;
+}
+
+#sessionNum {
+    color: #e94560;
+    font-weight: 700;
+}
+
+/* ---- CONTROLS ---- */
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
 #btn {
-    width: 180px;
+    width: 120px;
     padding: 10px 0;
     border: none;
     border-radius: 8px;
     background-color: #e94560;
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
-#timer {
-    font-size: 42px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 2px;
-}
+
 #btn:hover {
     background-color: #c73652;
+}
+
+#resetBtn {
+    width: 80px;
+    padding: 10px 0;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#resetBtn:hover {
+    border-color: #e94560;
+    color: #e94560;
+}
+
+/* ---- MODE COLORS ---- */
+body.break-mode .progress-ring__fill {
+    stroke: #4e9af1;
+}
+
+body.break-mode #btn {
+    background-color: #4e9af1;
+}
+
+body.break-mode #btn:hover {
+    background-color: #3a7fd4;
 }

@@ -1,20 +1,40 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>FocusFlow</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <p id="sessionCount">Sessions: </p>
-    <h1 id ="status">Ready to focus?</h1>
-    <p id="timer">25:00:000</p>
-<button id="btn">Click me</button>
 
+    <!-- App Header -->
+    <div class="header">
+        <h1 class="app-name">FocusFlow</h1>
+        <p class="tagline">Stay locked in.</p>
+    </div>
 
+    <!-- Timer Section -->
+    <div class="timer-container">
+        <svg class="progress-ring" width="180" height="180">
+            <circle class="progress-ring__track" cx="90" cy="90" r="80"/>
+            <circle class="progress-ring__fill" cx="90" cy="90" r="80" id="progressRing"/>
+        </svg>
+        <div class="timer-text">
+            <p id="timer">25:00</p>
+            <p id="status">Ready to focus?</p>
+        </div>
+    </div>
 
+    <!-- Session Count -->
+    <p id="sessionCount">Sessions completed: <span id="sessionNum">0</span></p>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="btn">Start</button>
+        <button id="resetBtn">Reset</button>
+    </div>
 
     <script src="popup.js"></script>
 </body>
-
 </html>

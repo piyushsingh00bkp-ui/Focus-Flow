@@ -1,114 +1,220 @@
+// ---- ELEMENTS ----
 const startBtn = document.getElementById("btn");
-const status = document.getElementById("status");
-const time = document.getElementById("timer");
-const sessions = document.getElementById("sessionCount")
+const resetBtn = document.getElementById("resetBtn");
+const statusEl = document.getElementById("status");
+const timerEl = document.getElementById("timer");
+const sessionNumEl = document.getElementById("sessionNum");
+const ring = document.getElementById("progressRing");
 
-let isFocusing = false;
-let timeLeft = 25*60*1000;
-let timer = null;
+// ---- CONSTANTS ----
+const FOCUS_TIME = 25 * 60;
+const BREAK_TIME = 5 * 60;
+const CIRCUMFERENCE = 502;
+
+// ---- STATE ----
+let timeLeft = FOCUS_TIME;
+let isRunning = false;
 let isBreak = false;
-let breakTime = 5 * 60 * 1000;
-let sessionCounter =0;
+let sessionCount = 0;
+let timer = null;
 
-startBtn.addEventListener("click", () => {
+// ---- INIT ----
+loadSessions();
+restoreTimer();
 
-    if (isFocusing === false) {
+// ---- RESTORE TIMER ----
+function restoreTimer() {
+  chrome.storage.local.get(
+    ["startTime", "totalTime", "isBreak", "isRunning", "pausedTimeLeft"],
+    (data) => {
+      // Restore paused state
+      if (!data.isRunning && data.pausedTimeLeft) {
+        isBreak = data.isBreak || false;
+        timeLeft = data.pausedTimeLeft;
 
-        // START
-        isFocusing = true;
-        status.textContent = "Focus Mode On";
-        startBtn.textContent = "Stop";
+        if (isBreak) {
+          statusEl.textContent = "Break Time!";
+          document.body.classList.add("break-mode");
+        } else {
+          statusEl.textContent = "Ready to focus?";
+        }
 
-        console.log("TIMER STARTED");
+        updateDisplay(timeLeft);
+        updateRing(timeLeft, isBreak ? BREAK_TIME : FOCUS_TIME);
+        return;
+      }
 
-        timer = setInterval(() => {
+      // Restore running state
+      if (data.isRunning && data.startTime) {
+        const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
+        const remaining = data.totalTime - elapsed;
 
-            timeLeft -= 10;
+        if (remaining > 0) {
+          isBreak = data.isBreak;
+          timeLeft = remaining;
 
-            // TIMER FINISHED
+          if (isBreak) {
+            statusEl.textContent = "Break Time!";
+            document.body.classList.add("break-mode");
+          }
+
+          updateDisplay(timeLeft);
+          updateRing(timeLeft, data.totalTime);
+
+          startBtn.textContent = "Stop";
+          isRunning = true;
+
+          timer = setInterval(() => {
+            timeLeft--;
+            updateDisplay(timeLeft);
+            updateRing(timeLeft, data.totalTime);
+
             if (timeLeft <= 0) {
-                sessionCounter++;
-              sessions.textContent = "Sessions: " + sessionCounter;
-
-                clearInterval(timer);
-                timer = null;
-
-                if (isBreak === false) {
-
-                    // Focus ended → start break
-                    isBreak = true;
-                    timeLeft = breakTime;
-                    status.textContent = "Break Time!";
-
-                    // Auto start break
-                    timer = setInterval(() => {
-
-                        timeLeft -= 10;
-
-                        if (timeLeft <= 0) {
-
-                            clearInterval(timer);
-                            timer = null;
-
-                            isBreak = false;
-                            isFocusing = false;
-                            timeLeft = 25 * 60 * 1000;
-
-                            status.textContent = "Ready to focus?";
-                            startBtn.textContent = "Start";
-                            time.textContent = "25:00:000";
-
-                            return;
-                        }
-
-                        let minutes = Math.floor(timeLeft / 60000);
-                        let seconds = Math.floor(
-                            (timeLeft % 60000) / 1000
-                        );
-                        let milliseconds = timeLeft % 1000;
-
-                        time.textContent =
-                            `${String(minutes).padStart(2, "0")}:` +
-                            `${String(seconds).padStart(2, "0")}:` +
-                            `${String(milliseconds).padStart(3, "0")}`;
-
-                    }, 10);
-
-                }
-                return;
-
+              clearInterval(timer);
+              timer = null;
+              isRunning = false;
+              startBtn.textContent = "Start";
+              chrome.storage.local.set({ isRunning: false });
             }
+          }, 1000);
+        }
+      }
+    },
+  );
+}
 
-            let minutes = Math.floor(timeLeft / 60000);
-            let seconds = Math.floor(
-                (timeLeft % 60000) / 1000
-            );
-            let milliseconds = timeLeft % 1000;
+// ---- RING UPDATE ----
+function updateRing(timeLeft, totalTime) {
+  const progress = timeLeft / totalTime;
+  const offset = CIRCUMFERENCE * (1 - progress);
+  ring.style.strokeDashoffset = String(offset);
+}
 
-            time.textContent =
-                `${String(minutes).padStart(2, "0")}:` +
-                `${String(seconds).padStart(2, "0")}:` +
-                `${String(milliseconds).padStart(3, "0")}`;
+// ---- TIMER DISPLAY ----
+function updateDisplay(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  timerEl.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
-        }, 10);
+// ---- START / STOP ----
+startBtn.addEventListener("click", () => {
+  if (!isRunning) {
+    // START
+    isRunning = true;
+    startBtn.textContent = "Stop";
 
-    } else {
+    const startTime = Date.now();
+    const total = isBreak ? BREAK_TIME : FOCUS_TIME;
+    chrome.storage.local.set({
+      startTime: startTime,
+      totalTime: total,
+      isBreak: isBreak,
+      isRunning: true,
+    });
 
-        // STOP MANUALLY
-        isFocusing = false;
+    chrome.alarms.create(isBreak ? "breakEnd" : "focusEnd", {
+      delayInMinutes: total / 60,
+    });
 
-        status.textContent = "Ready to focus?";
-        startBtn.textContent = "Start";
+    timer = setInterval(() => {
+      timeLeft--;
+      const total = isBreak ? BREAK_TIME : FOCUS_TIME;
 
+      updateDisplay(timeLeft);
+      updateRing(timeLeft, total);
+
+      if (timeLeft <= 0) {
         clearInterval(timer);
         timer = null;
+        isRunning = false;
+        startBtn.textContent = "Start";
 
-        isBreak = false;
-        timeLeft = 25 * 60 * 1000;
+        if (!isBreak) {
+          sessionCount++;
+          sessionNumEl.textContent = sessionCount;
+          saveSessions();
 
-        time.textContent = "25:00:000";
+          isBreak = true;
+          timeLeft = BREAK_TIME;
+          statusEl.textContent = "Break Time!";
+          document.body.classList.add("break-mode");
 
-        console.log("TIMER STOPPED");
-    }
+          sendNotification("Focus session done!", "Time for a 5 minute break.");
+        } else {
+          isBreak = false;
+          timeLeft = FOCUS_TIME;
+          statusEl.textContent = "Ready to focus?";
+          document.body.classList.remove("break-mode");
 
+          sendNotification("Break over!", "Time to get back to work.");
+        }
+
+        updateDisplay(timeLeft);
+        updateRing(timeLeft, isBreak ? BREAK_TIME : FOCUS_TIME);
+        chrome.storage.local.set({ isRunning: false });
+      }
+    }, 1000);
+  } else {
+    // STOP
+    clearInterval(timer);
+    timer = null;
+    isRunning = false;
+    startBtn.textContent = "Start";
+    chrome.alarms.clearAll();
+    chrome.storage.local.set({
+      isRunning: false,
+      pausedTimeLeft: timeLeft,
+      isBreak: isBreak,
+    });
+  }
 });
+
+// ---- RESET ----
+resetBtn.addEventListener("click", () => {
+  clearInterval(timer);
+  timer = null;
+  isRunning = false;
+  isBreak = false;
+  timeLeft = FOCUS_TIME;
+
+  startBtn.textContent = "Start";
+  statusEl.textContent = "Ready to focus?";
+  document.body.classList.remove("break-mode");
+
+  updateDisplay(timeLeft);
+  updateRing(timeLeft, FOCUS_TIME);
+
+  chrome.alarms.clearAll();
+  chrome.storage.local.remove([
+    "startTime",
+    "totalTime",
+    "isRunning",
+    "isBreak",
+    "pausedTimeLeft",
+  ]);
+});
+
+// ---- NOTIFICATIONS ----
+function sendNotification(title, message) {
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: "icons/icon48.png",
+    title: title,
+    message: message,
+  });
+}
+
+// ---- STORAGE ----
+function saveSessions() {
+  chrome.storage.local.set({ sessions: sessionCount });
+}
+
+function loadSessions() {
+  chrome.storage.local.get("sessions", (data) => {
+    if (data.sessions) {
+      sessionCount = data.sessions;
+      sessionNumEl.textContent = sessionCount;
+    }
+  });
+}
