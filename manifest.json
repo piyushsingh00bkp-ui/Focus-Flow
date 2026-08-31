@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "My First Extension",
+  "name": "Focus Flow",
   "version": "1.0.0",
   "description": "A clean pomodoro timer to help you stay focused and be productive ",
   "action": {
